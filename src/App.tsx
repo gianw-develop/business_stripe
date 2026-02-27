@@ -103,21 +103,12 @@ function MainLayout({ children, session, userRole }: { children: React.ReactNode
             <span className="bg-[var(--color-brand-600)]/20 text-[var(--color-brand-400)] text-[10px] px-2 py-0.5 rounded border border-[var(--color-brand-600)]/30">v2.1</span>
           </div>
           <nav className="flex-1 space-y-2">
-            {isAdmin ? (
-              <Link
-                to="/"
-                className={`flex items-center gap-3 p-3 rounded-lg font-medium transition-colors ${isActive('/') ? 'bg-[var(--color-dark-border)] text-white' : 'text-gray-400 hover:text-white hover:bg-[var(--color-dark-border)]/50'}`}
-              >
-                <LayoutDashboard className="w-5 h-5" /> Dashboard
-              </Link>
-            ) : (
-              <Link
-                to="/history"
-                className={`flex items-center gap-3 p-3 rounded-lg font-medium transition-colors ${isActive('/history') ? 'bg-[var(--color-dark-border)] text-white' : 'text-gray-400 hover:text-white hover:bg-[var(--color-dark-border)]/50'}`}
-              >
-                <LayoutDashboard className="w-5 h-5" /> Dashboard
-              </Link>
-            )}
+            <Link
+              to="/"
+              className={`flex items-center gap-3 p-3 rounded-lg font-medium transition-colors ${isActive('/') ? 'bg-[var(--color-dark-border)] text-white' : 'text-gray-400 hover:text-white hover:bg-[var(--color-dark-border)]/50'}`}
+            >
+              <LayoutDashboard className="w-5 h-5" /> Dashboard
+            </Link>
 
             <Link
               to="/upload"
@@ -268,7 +259,7 @@ function App() {
     <Router>
       <MainLayout session={session} userRole={userRole}>
         <Routes>
-          {isAdmin && <Route path="/" element={<Dashboard />} />}
+          <Route path="/" element={isAdmin ? <Dashboard /> : <PartnerHistoryView />} />
           {isAdmin && <Route path="/vault" element={<Vault />} />}
           {isAdmin && <Route path="/settings" element={<div className="p-8 max-w-7xl mx-auto"><AdminSettings /></div>} />}
 
@@ -276,7 +267,7 @@ function App() {
           <Route path="/history" element={<PartnerHistoryView />} />
           <Route path="/stripe" element={<StripeDataView />} />
 
-          <Route path="*" element={<Navigate to={isAdmin ? "/" : "/upload"} />} />
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </MainLayout>
     </Router>
