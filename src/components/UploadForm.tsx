@@ -82,12 +82,18 @@ export function UploadForm({ onUploadSuccess }: { onUploadSuccess: () => void })
                     contents: [{
                         parts: [
                             {
-                                text: `You are an expert data extractor. Look at this receipt. 
-                            1. Find the TOTAL amount (just the number, eg 1500.50). 
-                            2. Identify which of these companies it belongs to: ${companyList}. 
-                            
-                            Return the result EXACTLY as this JSON object and nothing else, without markdown formatting:
-                            {"amount": 1500.50, "company": "Exact Company Name or UNKNOWN"}` },
+                                text: `You are an expert data extractor. Analyze this Stripe receipt/dashboard image carefully.
+1. Find the main TOTAL or GROSS amount deposited.
+2. Identify the company name from this allowed list: ${companyList}. Look for the account name at the top or in the statement descriptor.
+
+Return EXACTLY this JSON structure and absolutely nothing else (no markdown, no backticks):
+{
+  "evidence_amount": "text on the image where you found the amount",
+  "evidence_company": "text on the image where you found the company",
+  "confidence": 0.95,
+  "amount": 1500.50,
+  "company": "Exact Company Name or UNKNOWN"
+}` },
                             { inlineData: { mimeType, data: base64Image } }
                         ]
                     }],
@@ -147,7 +153,12 @@ export function UploadForm({ onUploadSuccess }: { onUploadSuccess: () => void })
                 } else {
                     // Fallback Regex if JSON failed utterly
                     console.log("Applying regex fallback...");
-                    const amountMatch = extractedText.match(/(?:amount|"amount"\s*:\s*)[\s$]*([\d,.]+)/i);
+                    let amountMatch = extractedText.match(/(?:amount|"amount"\s*:\s*)[\s$]*([\d,.]+)/i);
+                    // Aggressive fallback for Stripe style "$2,370.00"
+                    if (!amountMatch) {
+                        amountMatch = extractedText.match(/\$?\s?(\d{1,3}(?:,\d{3})*(?:\.\d{2}))/);
+                    }
+
                     if (amountMatch) {
                         const cleanAmount = amountMatch[1].replace(/,/g, '');
                         setAmount(parseFloat(cleanAmount).toString());
@@ -338,6 +349,7 @@ export function UploadForm({ onUploadSuccess }: { onUploadSuccess: () => void })
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                 <UploadCloud className="w-10 h-10 mb-3 text-gray-500" />
                                 <p className="mb-2 text-sm text-gray-400"><span className="font-semibold text-[var(--color-brand-500)]">Click to upload</span> or drag and drop</p>
+                                <p className="text-xs text-[var(--color-brand-400)] font-medium mb-1">Tip: Upload the actual receipt, not a full dashboard screenshot.</p>
                                 <p className="text-xs text-gray-500">PNG, JPG, JPEG</p>
                             </div>
                         )}
