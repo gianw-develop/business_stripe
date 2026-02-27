@@ -82,18 +82,24 @@ export function UploadForm({ onUploadSuccess }: { onUploadSuccess: () => void })
                     contents: [{
                         parts: [
                             {
-                                text: `You are an expert data extractor. Analyze this Stripe receipt/dashboard image carefully.
-1. Find the main TOTAL or GROSS amount deposited.
-2. Identify the company name from this allowed list: ${companyList}. Look for the account name at the top or in the statement descriptor.
+                                text: `Extract ONLY:
+- company_name (legal business / account name if present from this allowed list: ${companyList})
+- amount_text (payout/sent amount EXACTLY as seen on image e.g. "$2,370.00")
+- currency (USD/EUR/etc)
 
-Return EXACTLY this JSON structure and absolutely nothing else (no markdown, no backticks):
+Return STRICT JSON with this schema, and absolutely nothing else:
 {
-  "evidence_amount": "text on the image where you found the amount",
-  "evidence_company": "text on the image where you found the company",
+  "company_name": "string or null",
+  "amount_text": "string or null",
+  "currency": "string or null",
   "confidence": 0.95,
-  "amount": 1500.50,
-  "company": "Exact Company Name or UNKNOWN"
-}` },
+  "notes": "string"
+}
+
+Rules:
+- If unsure, use nulls.
+- confidence: 0 to 1.
+- amount_text must be exactly as seen.` },
                             { inlineData: { mimeType, data: base64Image } }
                         ]
                     }],
@@ -132,22 +138,31 @@ Return EXACTLY this JSON structure and absolutely nothing else (no markdown, no 
                 }
 
                 if (parsedObj) {
-                    // 1. Handle Amount
-                    if (parsedObj.amount) {
-                        const cleanAmount = String(parsedObj.amount).replace(/,/g, '');
-                        setAmount(parseFloat(cleanAmount).toString());
+                    // ChatGPT recommended parse algorithm
+                    const parseMoney = (str: string | null | undefined) => {
+                        if (!str) return null;
+                        const cleaned = String(str).replace(/[^0-9.,]/g, "").replace(/,/g, "");
+                        const n = Number(cleaned);
+                        return Number.isFinite(n) ? n : null;
+                    };
+
+                    // 1. Handle Amount via amount_text or amount
+                    const rawAmount = parsedObj.amount_text || parsedObj.amount;
+                    const finalAmount = parseMoney(rawAmount);
+                    if (finalAmount) {
+                        setAmount(finalAmount.toString());
                     }
-                    // 2. Handle Company
-                    if (parsedObj.company) {
-                        const guessedName = String(parsedObj.company).trim();
-                        if (guessedName.toUpperCase() !== 'UNKNOWN') {
-                            const found = companies.find(c =>
-                                c.name.toLowerCase().includes(guessedName.toLowerCase()) ||
-                                guessedName.toLowerCase().includes(c.name.toLowerCase())
-                            );
-                            if (found) {
-                                setSelectedCompany(found.id);
-                            }
+
+                    // 2. Handle Company via company_name or company
+                    const rawCompany = parsedObj.company_name || parsedObj.company;
+                    if (rawCompany && String(rawCompany).toUpperCase() !== 'UNKNOWN') {
+                        const guessedName = String(rawCompany).trim();
+                        const found = companies.find(c =>
+                            c.name.toLowerCase().includes(guessedName.toLowerCase()) ||
+                            guessedName.toLowerCase().includes(c.name.toLowerCase())
+                        );
+                        if (found) {
+                            setSelectedCompany(found.id);
                         }
                     }
                 } else {
