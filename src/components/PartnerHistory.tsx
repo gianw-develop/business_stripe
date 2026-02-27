@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
-import { History, Calendar as CalendarIcon, Loader2, Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { History, Calendar as CalendarIcon, Loader2, Clock, CheckCircle2, XCircle, Trash2 } from 'lucide-react';
+
 
 type Transaction = {
     id: string;
@@ -64,6 +65,23 @@ export function PartnerHistory() {
         }
     };
 
+    const deleteTransaction = async (id: string) => {
+        if (!confirm('Are you sure you want to permanently delete this manual upload?')) return;
+        try {
+            setLoading(true);
+            const { error } = await supabase
+                .from('transactions')
+                .delete()
+                .eq('id', id);
+
+            if (error) throw error;
+            await fetchHistory();
+        } catch (err) {
+            console.error("Error deleting", err);
+            setLoading(false);
+        }
+    };
+
     const pendingTxs = transactions.filter(t => t.status === 'pending');
     // Ensure rejected are also in history
     const processedTxs = transactions.filter(t => t.status !== 'pending');
@@ -82,7 +100,16 @@ export function PartnerHistory() {
         const finalUSDT = tx.amount - commission;
 
         return (
-            <div className="bg-[#0e1420] border border-[var(--color-dark-border)] rounded-xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:bg-[var(--color-dark-border)]/30">
+            <div className="bg-[#0e1420] border border-[var(--color-dark-border)] rounded-xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:bg-[var(--color-dark-border)]/30 relative">
+                {tx.status === 'pending' && (
+                    <button
+                        onClick={() => deleteTransaction(tx.id)}
+                        className="absolute top-4 right-4 p-1.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-md transition-colors"
+                        title="Delete permanently"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                    </button>
+                )}
                 <div className="flex items-center gap-4">
                     <div className="bg-[var(--color-dark-bg)] p-3 rounded-lg border border-[var(--color-dark-border)]">
                         {tx.status === 'pending' ? <Clock className="w-6 h-6 text-yellow-500" /> :

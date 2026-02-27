@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { format } from 'date-fns';
 import { enUS } from 'date-fns/locale';
-import { CheckCircle2, Clock, ExternalLink, Calculator, DollarSign, Loader2, MessageSquare } from 'lucide-react';
+import { CheckCircle2, Clock, ExternalLink, Calculator, DollarSign, Loader2, MessageSquare, Trash2 } from 'lucide-react';
 
 type Transaction = {
     id: string;
@@ -80,6 +80,24 @@ export function AdminTable() {
             await fetchTransactions(); // refresh
         } catch (err) {
             console.error("Error updating status", err);
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
+    const deleteTransaction = async (id: string) => {
+        if (!confirm('Are you sure you want to permanently delete this manual upload?')) return;
+        try {
+            setProcessingId(id);
+            const { error } = await supabase
+                .from('transactions')
+                .delete()
+                .eq('id', id);
+
+            if (error) throw error;
+            await fetchTransactions(); // refresh
+        } catch (err) {
+            console.error("Error deleting", err);
         } finally {
             setProcessingId(null);
         }
@@ -228,6 +246,14 @@ export function AdminTable() {
                                                         title="Approve"
                                                     >
                                                         {processingId === tx.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                                                    </button>
+                                                    <button
+                                                        disabled={processingId === tx.id}
+                                                        onClick={() => deleteTransaction(tx.id)}
+                                                        className="p-1.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-md transition-colors disabled:opacity-50"
+                                                        title="Delete permanently"
+                                                    >
+                                                        {processingId === tx.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                                                     </button>
                                                 </div>
                                             )}
