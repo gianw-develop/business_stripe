@@ -68,8 +68,8 @@ export function UploadForm({ onUploadSuccess }: { onUploadSuccess: () => void })
             const mimeType = fileToScan.type;
             console.log("Image MimeType:", mimeType);
 
-            // Using stable Gemini 1.5 Flash
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+            // Using latest Gemini 2.5 Flash as required by the new API key
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
             // Build a list of companies to help the AI match
             const companyList = companies.map(c => c.name).join(", ");
