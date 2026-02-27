@@ -7,6 +7,7 @@ import { DailyChecklist } from './components/DailyChecklist';
 import { AdminTable } from './components/AdminTable';
 import { Vault } from './components/Vault';
 import { DashboardOverview } from './components/DashboardOverview';
+import { PartnerDashboardOverview } from './components/PartnerDashboardOverview';
 import { PartnerHistory } from './components/PartnerHistory';
 import { StripeData } from './components/StripeData';
 import { AdminSettings } from './components/AdminSettings';
@@ -51,12 +52,18 @@ function UploadReceipt() {
 
 function PartnerHistoryView() {
   return (
-    <div className="p-8 max-w-7xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-100">Upload History</h1>
-        <p className="text-gray-400 mt-2">Historical view of your deposits and USDT payouts.</p>
-      </div>
-      <PartnerHistory />
+    <div className="p-8 max-w-7xl mx-auto space-y-12">
+      <section>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-100">Partner Dashboard</h1>
+          <p className="text-gray-400 mt-2">Your daily progress, pending amounts, and approved payouts.</p>
+        </div>
+        <PartnerDashboardOverview />
+      </section>
+
+      <section className="pt-8 border-t border-[var(--color-dark-border)]">
+        <PartnerHistory />
+      </section>
     </div>
   )
 }
