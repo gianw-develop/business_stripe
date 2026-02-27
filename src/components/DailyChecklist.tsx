@@ -57,27 +57,34 @@ export function DailyChecklist() {
 
             if (trackError) throw trackError;
 
-            const uploadedIds = new Set(todayTracking?.map(t => t.company_id));
-
-            // Calculate today's total deposit
+            const validTrackingIds = new Set<string>();
             let total = 0;
+
             todayTracking?.forEach((t: any) => {
+                let hasValidTransaction = false;
+
                 if (t.transactions) {
                     // Supabase 1:1 vs 1:N relations sometimes return objects or arrays.
-                    // Handle both cases
                     if (Array.isArray(t.transactions) && t.transactions.length > 0) {
                         total += Number(t.transactions[0].amount);
-                    } else if (!Array.isArray(t.transactions) && t.transactions.amount) {
+                        hasValidTransaction = true;
+                    } else if (!Array.isArray(t.transactions) && t.transactions.amount !== undefined) {
                         total += Number(t.transactions.amount);
+                        hasValidTransaction = true;
                     }
                 }
+
+                if (hasValidTransaction) {
+                    validTrackingIds.add(t.company_id);
+                }
             });
+
             setDailyTotal(total);
 
             const statusMap = allCompanies.map(c => ({
                 id: c.id,
                 name: c.name,
-                has_uploaded: uploadedIds.has(c.id)
+                has_uploaded: validTrackingIds.has(c.id)
             }));
 
             setCompanies(statusMap);
