@@ -35,7 +35,12 @@ export function PartnerHistory() {
                 setCommissionRate(Number(settingsData.setting_value) || 10);
             }
 
-            // Fetch transactions with company details
+            // Fetch transactions for THIS specific user ONLY
+            const { data: userData } = await supabase.auth.getUser();
+            const userId = userData?.user?.id;
+
+            if (!userId) return;
+
             const { data: txs, error } = await supabase
                 .from('transactions')
                 .select(`
@@ -46,6 +51,7 @@ export function PartnerHistory() {
                     receipt_url,
                     companies (name)
                 `)
+                .eq('user_id', userId)
                 .order('date_expected', { ascending: false })
                 .order('created_at', { ascending: false });
 
@@ -59,6 +65,7 @@ export function PartnerHistory() {
     };
 
     const pendingTxs = transactions.filter(t => t.status === 'pending');
+    // Ensure rejected are also in history
     const processedTxs = transactions.filter(t => t.status !== 'pending');
 
     if (loading) {

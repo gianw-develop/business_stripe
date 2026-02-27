@@ -112,24 +112,37 @@ export function UploadForm({ onUploadSuccess }: { onUploadSuccess: () => void })
             if (extractedText) {
                 console.log("AI Extracted Text:", extractedText);
 
-                // Parse Amount
-                const amountMatch = extractedText.match(/AMOUNT:\s*([\d,.]+)/i);
+                // Relaxed Regex: Handle Markdown like **AMOUNT:** and optional spaces
+                const amountMatch = extractedText.match(/\*?AMOUNT\*?[:\s]+([\d,.]+)/i);
                 if (amountMatch) {
                     const cleanAmount = amountMatch[1].replace(/,/g, '');
                     setAmount(parseFloat(cleanAmount).toString());
+                } else {
+                    console.log("Failed to match AMOUNT. Regex missed.");
                 }
 
-                // Parse Company
-                const companyMatch = extractedText.match(/COMPANY:\s*(.+)/i);
+                const companyMatch = extractedText.match(/\*?COMPANY\*?[:\s]+([^\n]+)/i);
                 if (companyMatch) {
-                    const guessedName = companyMatch[1].trim();
-                    const found = companies.find(c =>
-                        c.name.toLowerCase().includes(guessedName.toLowerCase()) ||
-                        guessedName.toLowerCase().includes(c.name.toLowerCase())
-                    );
-                    if (found) {
-                        setSelectedCompany(found.id);
+                    let guessedName = companyMatch[1].trim();
+                    // Remove asterisks strictly.
+                    guessedName = guessedName.replace(/\*/g, '').trim();
+
+                    console.log("AI Chose Company:", guessedName);
+                    if (guessedName.toUpperCase() !== 'UNKNOWN') {
+                        const found = companies.find(c =>
+                            c.name.toLowerCase().includes(guessedName.toLowerCase()) ||
+                            guessedName.toLowerCase().includes(c.name.toLowerCase())
+                        );
+                        if (found) {
+                            setSelectedCompany(found.id);
+                        } else {
+                            console.log("No company matched in the DB for:", guessedName);
+                        }
+                    } else {
+                        console.log("AI returned UNKNOWN company");
                     }
+                } else {
+                    console.log("Failed to match COMPANY. Regex missed.");
                 }
             } else {
                 console.warn("Candidate content or parts missing in Gemini response.");
