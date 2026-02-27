@@ -91,11 +91,6 @@ function MainLayout({ children, session, userRole }: { children: React.ReactNode
 
   return (
     <div className="min-h-screen bg-[var(--color-dark-bg)] text-white flex flex-col">
-      {/* Version Checker Banner */}
-      <div className="bg-red-600 text-white text-[10px] font-bold py-1 px-4 flex justify-between items-center z-[100] sticky top-0 uppercase tracking-widest">
-        <span>V2.2 ACTIVE - IF YOU DON'T SEE THIS, PRESS CTRL+F5</span>
-        <span>Build: Feb 27, 2026 (Patch 1)</span>
-      </div>
       <div className="flex flex-1">
         <aside className="w-64 bg-[var(--color-dark-card)] border-r border-[var(--color-dark-border)] p-4 flex flex-col">
           <div className="flex items-center justify-between mb-8">
