@@ -93,8 +93,7 @@ export function UploadForm({ onUploadSuccess }: { onUploadSuccess: () => void })
                     }],
                     generationConfig: {
                         temperature: 0.1,
-                        maxOutputTokens: 150,
-                        responseMimeType: "application/json"
+                        maxOutputTokens: 150
                     }
                 })
             });
