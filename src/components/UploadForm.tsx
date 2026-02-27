@@ -86,13 +86,12 @@ export function UploadForm({ onUploadSuccess }: { onUploadSuccess: () => void })
                             1. Find the TOTAL amount (just the number, eg 1500.50). 
                             2. Identify which of these companies it belongs to: ${companyList}. 
                             
-                            Return the result in this EXACT format:
-                            AMOUNT: [number]
-                            COMPANY: [exact name from list or 'UNKNOWN']` },
+                            Return the result EXACTLY as this JSON object and nothing else, without markdown formatting:
+                            {"amount": 1500.50, "company": "Exact Company Name or UNKNOWN"}` },
                             { inlineData: { mimeType, data: base64Image } }
                         ]
                     }],
-                    generationConfig: { temperature: 0.1, maxOutputTokens: 60 }
+                    generationConfig: { temperature: 0.1, maxOutputTokens: 100 }
                 })
             });
 
@@ -107,42 +106,63 @@ export function UploadForm({ onUploadSuccess }: { onUploadSuccess: () => void })
             const data = await response.json();
             console.log("Gemini JSON Response:", JSON.stringify(data, null, 2));
 
-            const extractedText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+            let extractedText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
 
             if (extractedText) {
                 console.log("AI Extracted Text:", extractedText);
 
-                // Relaxed Regex: Handle Markdown like **AMOUNT:** and optional spaces
-                const amountMatch = extractedText.match(/\*?AMOUNT\*?[:\s]+([\d,.]+)/i);
-                if (amountMatch) {
-                    const cleanAmount = amountMatch[1].replace(/,/g, '');
-                    setAmount(parseFloat(cleanAmount).toString());
-                } else {
-                    console.log("Failed to match AMOUNT. Regex missed.");
+                // Strip markdown code blocks if Gemini ignores the instruction and adds them anyway
+                extractedText = extractedText.replace(/```json/g, '').replace(/```/g, '').trim();
+
+                let parsedObj: any = null;
+                try {
+                    parsedObj = JSON.parse(extractedText);
+                    console.log("Successfully parsed AI output as JSON:", parsedObj);
+                } catch (e) {
+                    console.warn("AI output was not valid JSON, trying fallback regex...", e);
                 }
 
-                const companyMatch = extractedText.match(/\*?COMPANY\*?[:\s]+([^\n]+)/i);
-                if (companyMatch) {
-                    let guessedName = companyMatch[1].trim();
-                    // Remove asterisks strictly.
-                    guessedName = guessedName.replace(/\*/g, '').trim();
-
-                    console.log("AI Chose Company:", guessedName);
-                    if (guessedName.toUpperCase() !== 'UNKNOWN') {
-                        const found = companies.find(c =>
-                            c.name.toLowerCase().includes(guessedName.toLowerCase()) ||
-                            guessedName.toLowerCase().includes(c.name.toLowerCase())
-                        );
-                        if (found) {
-                            setSelectedCompany(found.id);
-                        } else {
-                            console.log("No company matched in the DB for:", guessedName);
+                if (parsedObj) {
+                    // 1. Handle Amount
+                    if (parsedObj.amount) {
+                        const cleanAmount = String(parsedObj.amount).replace(/,/g, '');
+                        setAmount(parseFloat(cleanAmount).toString());
+                    }
+                    // 2. Handle Company
+                    if (parsedObj.company) {
+                        const guessedName = String(parsedObj.company).trim();
+                        if (guessedName.toUpperCase() !== 'UNKNOWN') {
+                            const found = companies.find(c =>
+                                c.name.toLowerCase().includes(guessedName.toLowerCase()) ||
+                                guessedName.toLowerCase().includes(c.name.toLowerCase())
+                            );
+                            if (found) {
+                                setSelectedCompany(found.id);
+                            }
                         }
-                    } else {
-                        console.log("AI returned UNKNOWN company");
                     }
                 } else {
-                    console.log("Failed to match COMPANY. Regex missed.");
+                    // Fallback Regex if JSON failed utterly
+                    console.log("Applying regex fallback...");
+                    const amountMatch = extractedText.match(/(?:amount|"amount"\s*:\s*)[\s$]*([\d,.]+)/i);
+                    if (amountMatch) {
+                        const cleanAmount = amountMatch[1].replace(/,/g, '');
+                        setAmount(parseFloat(cleanAmount).toString());
+                    }
+
+                    const companyMatch = extractedText.match(/(?:company|"company"\s*:\s*)"?([^"\n]+)"?/i);
+                    if (companyMatch) {
+                        const guessedName = companyMatch[1].replace(/\*/g, '').trim();
+                        if (guessedName.toUpperCase() !== 'UNKNOWN') {
+                            const found = companies.find(c =>
+                                c.name.toLowerCase().includes(guessedName.toLowerCase()) ||
+                                guessedName.toLowerCase().includes(c.name.toLowerCase())
+                            );
+                            if (found) {
+                                setSelectedCompany(found.id);
+                            }
+                        }
+                    }
                 }
             } else {
                 console.warn("Candidate content or parts missing in Gemini response.");

@@ -86,8 +86,8 @@ function MainLayout({ children, session, userRole }: { children: React.ReactNode
     <div className="min-h-screen bg-[var(--color-dark-bg)] text-white flex flex-col">
       {/* Version Checker Banner */}
       <div className="bg-red-600 text-white text-[10px] font-bold py-1 px-4 flex justify-between items-center z-[100] sticky top-0 uppercase tracking-widest">
-        <span>V2.1 ACTIVE - IF YOU DON'T SEE THIS, PRESS CTRL+F5</span>
-        <span>Build: Feb 27, 2026</span>
+        <span>V2.2 ACTIVE - IF YOU DON'T SEE THIS, PRESS CTRL+F5</span>
+        <span>Build: Feb 27, 2026 (Patch 1)</span>
       </div>
       <div className="flex flex-1">
         <aside className="w-64 bg-[var(--color-dark-card)] border-r border-[var(--color-dark-border)] p-4 flex flex-col">
@@ -96,10 +96,17 @@ function MainLayout({ children, session, userRole }: { children: React.ReactNode
             <span className="bg-[var(--color-brand-600)]/20 text-[var(--color-brand-400)] text-[10px] px-2 py-0.5 rounded border border-[var(--color-brand-600)]/30">v2.1</span>
           </div>
           <nav className="flex-1 space-y-2">
-            {isAdmin && (
+            {isAdmin ? (
               <Link
                 to="/"
                 className={`flex items-center gap-3 p-3 rounded-lg font-medium transition-colors ${isActive('/') ? 'bg-[var(--color-dark-border)] text-white' : 'text-gray-400 hover:text-white hover:bg-[var(--color-dark-border)]/50'}`}
+              >
+                <LayoutDashboard className="w-5 h-5" /> Dashboard
+              </Link>
+            ) : (
+              <Link
+                to="/history"
+                className={`flex items-center gap-3 p-3 rounded-lg font-medium transition-colors ${isActive('/history') ? 'bg-[var(--color-dark-border)] text-white' : 'text-gray-400 hover:text-white hover:bg-[var(--color-dark-border)]/50'}`}
               >
                 <LayoutDashboard className="w-5 h-5" /> Dashboard
               </Link>
