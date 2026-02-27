@@ -69,6 +69,12 @@ export function PartnerHistory() {
         if (!confirm('Are you sure you want to permanently delete this manual upload?')) return;
         try {
             setLoading(true);
+            // Additionally, delete any daily_tracking row linked to this transaction to correctly uncheck progress
+            await supabase
+                .from('daily_tracking')
+                .delete()
+                .eq('transaction_id', id);
+
             const { error } = await supabase
                 .from('transactions')
                 .delete()
