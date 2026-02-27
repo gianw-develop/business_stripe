@@ -91,7 +91,11 @@ export function UploadForm({ onUploadSuccess }: { onUploadSuccess: () => void })
                             { inlineData: { mimeType, data: base64Image } }
                         ]
                     }],
-                    generationConfig: { temperature: 0.1, maxOutputTokens: 100 }
+                    generationConfig: {
+                        temperature: 0.1,
+                        maxOutputTokens: 150,
+                        responseMimeType: "application/json"
+                    }
                 })
             });
 
@@ -167,9 +171,9 @@ export function UploadForm({ onUploadSuccess }: { onUploadSuccess: () => void })
             } else {
                 console.warn("Candidate content or parts missing in Gemini response.");
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error("Full AI Scanning error report:", err);
-            // Non-blocking error for UI
+            setError(`AI Scanner failed: ${err.message}. Please enter details manually.`);
         } finally {
             console.log("--- AI SCAN DIAGNOSTIC END ---");
             setIsScanningImage(false);
